@@ -33,6 +33,10 @@ if(WITH_TIFF)
   find_package(PROJ REQUIRED COMPONENTS proj)
 endif(WITH_TIFF)
 
+if(WITH_NETCDF)
+  find_package(NetCDF REQUIRED)
+endif(WITH_NETCDF)
+
 # Required packages.
 find_package(raycloudtools REQUIRED)
 find_package(Eigen3 REQUIRED)
