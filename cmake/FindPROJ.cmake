@@ -1,38 +1,22 @@
-# Find the PROJ library
-find_package_handle_standard_args(PROJ DEFAULT_MSG PROJ_LIBRARY PROJ_INCLUDE_DIR)
+# FindPROJ.cmake
+#
+# Finds the PROJ library installation
+#
+# This module will define the following variables:
+#  PROJ_FOUND          - True if PROJ was found
+#  PROJ_INCLUDE_DIRS   - PROJ include directories
+#  PROJ_LIBRARIES      - PROJ libraries to link against
+#  PROJ_VERSION        - Version of PROJ that was found
+#
+# The following variables can be set as arguments:
+#  PROJ_ROOT_DIR       - Root directory to search for PROJ
+#  PROJ_USE_STATIC_LIBS - Set to TRUE to look for static libraries
 
-# Define the PROJ library
-find_library(PROJ_LIBRARY
-    NAMES proj
-    PATHS ${CMAKE_LIBRARY_PATH}
-    NO_DEFAULT_PATH
-)
-
-# Define the PROJ include directory
-find_path(PROJ_INCLUDE_DIR
-    NAMES proj.h
-    PATHS ${CMAKE_INCLUDE_PATH}
-    NO_DEFAULT_PATH
-)
-
-# Handle the results
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(PROJ
-    REQUIRED_VARS PROJ_LIBRARY PROJ_INCLUDE_DIR
-    VERSION_VAR PROJ_VERSION
-)
-
-# Provide variables for the library and include directory
-set(PROJ_INCLUDE_DIRS ${PROJ_INCLUDE_DIR})
-set(PROJ_LIBRARIES ${PROJ_LIBRARY})
-
-# Provide version information if available
-if (PROJ_VERSION)
-    set(PROJ_VERSION_STRING "${PROJ_VERSION}")
-else()
-    set(PROJ_VERSION_STRING "unknown")
+if(PROJ_FOUND)
+    # PROJ is already found, no need to search again
+    return()
 endif()
-=======
+
 # Save previous settings
 set(_PROJ_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
 
@@ -149,4 +133,3 @@ mark_as_advanced(
     PROJ_INCLUDE_DIR
     PROJ_LIBRARY
 )
-
