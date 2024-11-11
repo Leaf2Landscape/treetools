@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
   return 0;
 }
 
-/// @brief add the capsule (cylinder with hemispherical ends) to the mesh, approximated with 6 circumferential vertices
+/// @brief add the capsule (cylinder with hemispherical ends) to the mesh, approximated with 18 circumferential vertices
 /// @param mesh the mesh to add the capsule to
 /// @param pos1 base centre of capsule
 /// @param pos2 end centre of capsule
@@ -185,26 +185,26 @@ void addCapsule(ray::Mesh &mesh, const Eigen::Vector3d &pos1, const Eigen::Vecto
   const int n = static_cast<int>(mesh.vertices().size());
   const Eigen::Vector3i N(n, n, n);
   std::vector<Eigen::Vector3i> &indices = mesh.indexList();
-  std::vector<Eigen::Vector3d> vertices(14);
+  std::vector<Eigen::Vector3d> vertices(38);  // 18 + 18 + 2 = 38 vertices
 
   const Eigen::Vector3d dir = (pos2 - pos1).normalized();
   const Eigen::Vector3d diag(1, 2, 3);
   const Eigen::Vector3d side1 = dir.cross(diag).normalized();
   const Eigen::Vector3d side2 = side1.cross(dir);
 
-  vertices[12] = pos1 - radius * dir * cap_scale;
-  vertices[13] = pos2 + radius * dir * cap_scale;
-  for (int i = 0; i < 6; i++)
+  vertices[36] = pos1 - radius * dir * cap_scale;
+  vertices[37] = pos2 + radius * dir * cap_scale;
+  for (int i = 0; i < 18; i++)
   {
-    const double pi = 3.14156;
-    const double angle = static_cast<double>(i) * 2.0 * pi / 6.0;
-    const double angle2 = angle + pi / 6.0;
+    const double pi = 3.14159265358979323846;
+    const double angle = static_cast<double>(i) * 2.0 * pi / 18.0;
+    const double angle2 = angle + pi / 18.0;
     vertices[i] = pos1 + radius * (side1 * std::sin(angle) + side2 * std::cos(angle));
-    vertices[i + 6] = pos2 + radius * (side1 * std::sin(angle2) + side2 * std::cos(angle2));
-    indices.push_back(N + Eigen::Vector3i(12, i, (i + 1) % 6));  // start end
-    indices.push_back(N + Eigen::Vector3i(13, (i + 1) % 6 + 6, i + 6));
-    indices.push_back(N + Eigen::Vector3i(i, i + 6, (i + 1) % 6));
-    indices.push_back(N + Eigen::Vector3i((i + 1) % 6 + 6, (i + 1) % 6, i + 6));
+    vertices[i + 18] = pos2 + radius * (side1 * std::sin(angle2) + side2 * std::cos(angle2));
+    indices.push_back(N + Eigen::Vector3i(36, i, (i + 1) % 18));  // start end
+    indices.push_back(N + Eigen::Vector3i(37, (i + 1) % 18 + 18, i + 18));
+    indices.push_back(N + Eigen::Vector3i(i, i + 18, (i + 1) % 18));
+    indices.push_back(N + Eigen::Vector3i((i + 1) % 18 + 18, (i + 1) % 18, i + 18));
   }
   mesh.vertices().insert(mesh.vertices().end(), vertices.begin(), vertices.end());
   for (size_t i = 0; i < vertices.size(); i++)
@@ -212,6 +212,41 @@ void addCapsule(ray::Mesh &mesh, const Eigen::Vector3d &pos1, const Eigen::Vecto
     mesh.colours().push_back(rgba);
   }
 }
+
+// void addCapsule(ray::Mesh &mesh, const Eigen::Vector3d &pos1, const Eigen::Vector3d &pos2, double radius,
+//                 ray::RGBA rgba, double cap_scale)
+// {
+//   const int n = static_cast<int>(mesh.vertices().size());
+//   const Eigen::Vector3i N(n, n, n);
+//   std::vector<Eigen::Vector3i> &indices = mesh.indexList();
+//   std::vector<Eigen::Vector3d> vertices(14);
+
+//   const Eigen::Vector3d dir = (pos2 - pos1).normalized();
+//   const Eigen::Vector3d diag(1, 2, 3);
+//   const Eigen::Vector3d side1 = dir.cross(diag).normalized();
+//   const Eigen::Vector3d side2 = side1.cross(dir);
+
+//   vertices[12] = pos1 - radius * dir * cap_scale;
+//   vertices[13] = pos2 + radius * dir * cap_scale;
+//   for (int i = 0; i < 6; i++)
+//   {
+//     const double pi = 3.14156;
+//     const double angle = static_cast<double>(i) * 2.0 * pi / 6.0;
+//     const double angle2 = angle + pi / 6.0;
+//     vertices[i] = pos1 + radius * (side1 * std::sin(angle) + side2 * std::cos(angle));
+//     vertices[i + 6] = pos2 + radius * (side1 * std::sin(angle2) + side2 * std::cos(angle2));
+//     indices.push_back(N + Eigen::Vector3i(12, i, (i + 1) % 6));  // start end
+//     indices.push_back(N + Eigen::Vector3i(13, (i + 1) % 6 + 6, i + 6));
+//     indices.push_back(N + Eigen::Vector3i(i, i + 6, (i + 1) % 6));
+//     indices.push_back(N + Eigen::Vector3i((i + 1) % 6 + 6, (i + 1) % 6, i + 6));
+//   }
+//   mesh.vertices().insert(mesh.vertices().end(), vertices.begin(), vertices.end());
+//   for (size_t i = 0; i < vertices.size(); i++)
+//   {
+//     mesh.colours().push_back(rgba);
+//   }
+// }
+
 
 // add a single section of a capsule. Each one is like a node in the polyline with a radius.
 void addCapsulePiece(ray::Mesh &mesh, int wind, const Eigen::Vector3d &pos, const Eigen::Vector3d &side1,

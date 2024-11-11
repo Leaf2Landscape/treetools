@@ -1,4 +1,3 @@
-# FindGeoTIFF.cmake
 #
 # Finds the GeoTIFF library and its dependencies
 #
