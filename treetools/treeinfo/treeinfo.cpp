@@ -53,12 +53,16 @@ struct Metrics
 {
   struct Stats
   {
-    Stats() : total(0.0), min(std::numeric_limits<double>::max()), max(std::numeric_limits<double>::lowest()) {}
+    Stats()
+      : total(0.0)
+      , min(std::numeric_limits<double>::max())
+      , max(std::numeric_limits<double>::lowest())
+    {}
     void update(double value)
     {
       total += value;
       min = std::min(min, value);
-      max = std::max(max, value);      
+      max = std::max(max, value);
     }
     double total;
     double min;
@@ -92,7 +96,7 @@ struct Metrics
   }
 };
 
-void printAttributes(const ray::ForestStructure &forest, std::vector<std::string> &tree_att, int num_tree_attributes, 
+void printAttributes(const ray::ForestStructure &forest, std::vector<std::string> &tree_att, int num_tree_attributes,
                      std::vector<std::string> &att, int num_attributes)
 {
   if (num_tree_attributes > 0)
@@ -167,7 +171,8 @@ int main(int argc, char *argv[])
   ray::OptionalFlagArgument branch_data("branch_data", 'b');
   ray::OptionalKeyValueArgument layer_option("layer_height", 'l', &layer_height);
   ray::OptionalKeyValueArgument crop_length_option("crop_length", 'c', &crop_length);
-  const bool parsed = ray::parseCommandLine(argc, argv, { &forest_file }, { &layer_option, &branch_data, &crop_length_option });
+  const bool parsed =
+    ray::parseCommandLine(argc, argv, { &forest_file }, { &layer_option, &branch_data, &crop_length_option });
   if (!parsed)
   {
     usage();
@@ -195,26 +200,27 @@ int main(int argc, char *argv[])
     double max_height = 0.0;
     for (auto &tree : forest.trees)
     {
-      for (auto &segment: tree.segments())
+      for (auto &segment : tree.segments())
       {
         max_height = std::max(max_height, segment.tip[2] - tree.segments()[0].tip[2]);
       }
     }
     int num_layers = (int)std::ceil(max_height / layer_height.value());
     std::cout << "Wood volume by " << layer_height.value() << " m layer from ground:" << std::endl;
-    for (int i = 0; i<num_layers; i++)
+    for (int i = 0; i < num_layers; i++)
     {
       double min_z = (double)i * layer_height.value();
-      double max_z = (double)(i+1) * layer_height.value();
+      double max_z = (double)(i + 1) * layer_height.value();
       double layer_volume = 0.0;
       for (auto &tree : forest.trees)
       {
-        for (auto &segment: tree.segments())
-        {     
+        for (auto &segment : tree.segments())
+        {
           double minz = min_z + tree.segments()[0].tip[2];
           double maxz = max_z + tree.segments()[0].tip[2];
-          // now crop the cylinder to this range.... 
-          double cylinder_volume = ray::kPi * segment.radius * segment.radius * (segment.tip - tree.segments()[segment.parent_id].tip).norm();
+          // now crop the cylinder to this range....
+          double cylinder_volume =
+            ray::kPi * segment.radius * segment.radius * (segment.tip - tree.segments()[segment.parent_id].tip).norm();
           double top = segment.tip[2];
           double bottom = tree.segments()[segment.parent_id].tip[2];
           if (top < bottom)
@@ -226,22 +232,22 @@ int main(int argc, char *argv[])
             if (top < minz || top > maxz)
               cylinder_volume = 0.0;
           }
-          else 
+          else
           {
             cylinder_volume *= std::max(0.0, std::min(top, maxz) - std::max(bottom, minz)) / (top - bottom);
           }
           layer_volume += cylinder_volume;
         }
-      } 
+      }
       std::cout << "Layer " << i << ": " << layer_volume << " m^3" << std::endl;
     }
     std::cout << std::endl;
   }
 
 
-
   const int num_tree_attributes = static_cast<int>(forest.trees[0].treeAttributeNames().size());
-  const std::vector<std::string> new_tree_attributes = { "height", "crown_radius", "dimension", "monocotal", "DBH", "bend", "branch_slope" };
+  const std::vector<std::string> new_tree_attributes = { "height", "crown_radius", "dimension",   "monocotal",
+                                                         "DBH",    "bend",         "branch_slope" };
   const int height_id = num_tree_attributes + 0;
   const int crown_radius_id = num_tree_attributes + 1;
   const int dimension_id = num_tree_attributes + 2;
@@ -260,9 +266,9 @@ int main(int argc, char *argv[])
     }
   }
 
-    const int num_attributes = static_cast<int>(forest.trees[0].attributeNames().size());
-  std::vector<std::string> new_attributes = { "volume", "diameter", "length", "strength", "min_strength",
-                                              "dominance", "angle", "children" };
+  const int num_attributes = static_cast<int>(forest.trees[0].attributeNames().size());
+  std::vector<std::string> new_attributes = { "volume",       "diameter",  "length", "strength",
+                                              "min_strength", "dominance", "angle",  "children" };
   if (branch_data.isSet())
   {
     new_attributes.push_back("branch");
@@ -273,7 +279,7 @@ int main(int argc, char *argv[])
   }
 
   // Indices for new attributes
-  int index = num_attributes; // Start indexing from the number of existing attributes
+  int index = num_attributes;  // Start indexing from the number of existing attributes
   const int volume_id = index++;
   const int diameter_id = index++;
   const int length_id = index++;
@@ -298,10 +304,6 @@ int main(int argc, char *argv[])
     pos_in_branch_id = index++;
     segment_length_id = index++;
   }
-
-  // Update the total number of attributes
-  const int total_new_attributes = index - num_attributes;
-  const int new_num_attributes = num_attributes + total_new_attributes; 
 
   auto &att = forest.trees[0].attributeNames();
   for (auto &new_at : new_attributes)
@@ -359,7 +361,9 @@ int main(int argc, char *argv[])
     {
       // 1. get branch IDs:
       int branch_number = 1;
-      std::vector<Eigen::Vector4i> ids(tree.segments().size(), Eigen::Vector4i(0,0,branch_number,0)); // seg id, branch order, branch, pos on branch
+      std::vector<Eigen::Vector4i> ids(
+        tree.segments().size(),
+        Eigen::Vector4i(0, 0, branch_number, 0));  // seg id, branch order, branch, pos on branch
       for (size_t i = 0; i < tree.segments().size(); i++)
       {
         double max_score = -1;
@@ -377,7 +381,7 @@ int main(int argc, char *argv[])
         }
         for (const auto &child : children[i])
         {
-          Eigen::Vector4i data(child, id[1], id[2], id[3]+1); // seg id, branch order, branch, pos on branch
+          Eigen::Vector4i data(child, id[1], id[2], id[3] + 1);  // seg id, branch order, branch, pos on branch
           if (child == largest_child)
           {
             tree.segments()[i].attributes[extension_id] = data[0];
@@ -391,7 +395,7 @@ int main(int argc, char *argv[])
           tree.segments()[child].attributes[branch_order_id] = data[1];
           tree.segments()[child].attributes[branch_id] = data[2];
           tree.segments()[child].attributes[pos_in_branch_id] = data[3];
-          ids[child] = data;            
+          ids[child] = data;
         }
         auto &segment = tree.segments()[i];
         if (segment.parent_id != -1)
@@ -410,7 +414,7 @@ int main(int argc, char *argv[])
     }
     std::vector<double> branch_lengths;
     tree::getBranchLengths(tree, children, branch_lengths, prune_length);
-    for (size_t j = 0; j<branch_lengths.size(); j++)
+    for (size_t j = 0; j < branch_lengths.size(); j++)
     {
       tree.segments()[j].attributes[length_id] = branch_lengths[j];
     }
@@ -418,8 +422,9 @@ int main(int argc, char *argv[])
     double tree_angle = 0.0;
     double total_weight = 0.0;
     std::vector<double> branch_angles, branch_dominances, branch_children;
-    tree::getBifurcationProperties(tree, children, branch_angles, branch_dominances, branch_children, tree_dominance, tree_angle, total_weight);    
-    for (size_t j = 0; j<branch_lengths.size(); j++)
+    tree::getBifurcationProperties(tree, children, branch_angles, branch_dominances, branch_children, tree_dominance,
+                                   tree_angle, total_weight);
+    for (size_t j = 0; j < branch_lengths.size(); j++)
     {
       tree.segments()[j].attributes[angle_id] = branch_angles[j];
       tree.segments()[j].attributes[dominance_id] = branch_dominances[j];
@@ -436,13 +441,13 @@ int main(int argc, char *argv[])
     metrics.DBH.update(tree.treeAttributes()[DBH_id]);
 
     std::vector<double> lengths;
-    for (size_t j = 0; j<children.size(); j++)
+    for (size_t j = 0; j < children.size(); j++)
     {
       auto &seg = tree.segments()[j];
       int par = seg.parent_id;
-      if (par == -1 || children[par].size() > 1) 
+      if (par == -1 || children[par].size() > 1)
       {
-        lengths.push_back(seg.attributes[length_id]); // is the length even being set on this exact segment??
+        lengths.push_back(seg.attributes[length_id]);  // is the length even being set on this exact segment??
       }
     }
     const int min_branch_count = 6;  // can't do any reasonable stats with fewer than this number of branches
@@ -481,7 +486,8 @@ int main(int argc, char *argv[])
       branch.attributes[diameter_id] = 2.0 * branch.radius;
       tree_diameter = std::max(tree_diameter, branch.attributes[diameter_id]);
       tree_volume += volume;
-      const double denom = std::max(std::numeric_limits<double>::min(), branch.attributes[length_id]);  // avoid a divide by 0
+      const double denom =
+        std::max(std::numeric_limits<double>::min(), branch.attributes[length_id]);  // avoid a divide by 0
       branch.attributes[strength_id] = std::pow(branch.attributes[diameter_id], 3.0 / 4.0) / denom;
     }
     // update whole-tree and tree root attributes
@@ -490,14 +496,15 @@ int main(int argc, char *argv[])
     tree.segments()[0].attributes[diameter_id] = tree_diameter;
     double tree_height = prune_length + max_bound[2] - tree.segments()[0].tip[2];
     tree.treeAttributes()[height_id] = tree_height;
-    double crown_radius = prune_length + 
-      ((max_bound[0] - min_bound[0]) + (max_bound[1] - min_bound[1])) / 2.0;  // mean of the bounding box extents
+    double crown_radius = prune_length + ((max_bound[0] - min_bound[0]) + (max_bound[1] - min_bound[1])) /
+                                           2.0;  // mean of the bounding box extents
     metrics.crown_radius.update(crown_radius);
     tree.treeAttributes()[crown_radius_id] = crown_radius;
     metrics.height.update(tree_height);
     tree_lengths.push_back(tree.segments()[0].attributes[length_id]);
-    tree.segments()[0].attributes[strength_id] = std::pow(tree_diameter, 3.0 / 4.0) 
-      / std::max(std::numeric_limits<double>::min(), tree.segments()[0].attributes[length_id]);
+    tree.segments()[0].attributes[strength_id] =
+      std::pow(tree_diameter, 3.0 / 4.0) /
+      std::max(std::numeric_limits<double>::min(), tree.segments()[0].attributes[length_id]);
     metrics.strength.update(tree.segments()[0].attributes[strength_id]);
 
     // alright, now we get the minimum strength from root to tip
