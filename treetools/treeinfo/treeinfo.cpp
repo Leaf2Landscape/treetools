@@ -277,33 +277,20 @@ int main(int argc, char *argv[])
     new_attributes.push_back("pos_in_branch");
     new_attributes.push_back("segment_length");
   }
-
-  // Indices for new attributes
-  int index = num_attributes;  // Start indexing from the number of existing attributes
-  const int volume_id = index++;
-  const int diameter_id = index++;
-  const int length_id = index++;
-  const int strength_id = index++;
-  const int min_strength_id = index++;
-  const int dominance_id = index++;
-  const int angle_id = index++;
-  const int children_id = index++;
-
-  // Declare optional attribute indices
-  int branch_id = -1;
-  int branch_order_id = -1;
-  int extension_id = -1;
-  int pos_in_branch_id = -1;
-  int segment_length_id = -1;
-
-  if (branch_data.isSet())
-  {
-    branch_id = index++;
-    branch_order_id = index++;
-    extension_id = index++;
-    pos_in_branch_id = index++;
-    segment_length_id = index++;
-  }
+  const int volume_id = num_attributes + 0;
+  const int diameter_id = num_attributes + 1;
+  const int length_id = num_attributes + 2;
+  const int strength_id = num_attributes + 3;
+  const int min_strength_id = num_attributes + 4;
+  const int dominance_id = num_attributes + 5;
+  const int angle_id = num_attributes + 6;
+  const int children_id = num_attributes + 7;
+  // optional with branch_data
+  const int branch_id = num_attributes + 8;
+  const int branch_order_id = num_attributes + 9;
+  const int extension_id = num_attributes + 10;
+  const int pos_in_branch_id = num_attributes + 11;
+  const int segment_length_id = num_attributes + 12;
 
   auto &att = forest.trees[0].attributeNames();
   for (auto &new_at : new_attributes)
