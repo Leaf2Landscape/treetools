@@ -18,34 +18,40 @@ void usage(int exit_code = 1)
   std::cout << "treecreate tree 1      - create a single tree with the given random seed" << std::endl;
   std::cout << "           --random_factor 0.25   - degree of randomness in the construction" << std::endl;
   std::cout << "           --max_trunk_radius 0.2 - maximum trunk radius (or the radius for a single tree)" << std::endl;
+  std::cout << "           --min_trunk_radius 0.1 - minimum trunk radius for randomisation" << std::endl;
   std::cout << "treecreate forest 1    - create a forest with the given random seed" << std::endl;
   std::cout << "           --width 20             - width of square section" << std::endl;
   std::cout << "           --dimension 2          - number of trees = radius^-dimension" << std::endl;
   std::cout << "           --tree_density 0.01    - number of mature trees per m^2" << std::endl;
+  std::cout << "           --max_trunk_radius 0.2 - maximum trunk radius" << std::endl;
+  std::cout << "           --min_trunk_radius 0.01 - minimum trunk radius" << std::endl;
   // clang-format on
   exit(exit_code);
 }
 
 /// This method generates a tree file according to a small set of procedural parameters and a random seed.
-/// It can generate a single tree or a firest of trees.
+/// It can generate a single tree or a forest of trees.
 int main(int argc, char *argv[])
 {
   ray::TextArgument tree_text("tree"), forest_text("forest");
   ray::DoubleArgument width(0.0001, 1000.0), max_trunk_radius(0.0001, 1000.0), dimension(0.0001, 10.0),
     tree_density(0.0001, 100.0);
+  ray::DoubleArgument min_trunk_radius(0.0001, 1000.0);
   ray::IntArgument seed(0, 100.0);
   ray::DoubleArgument random_factor(0, 100.0);
   ray::OptionalKeyValueArgument width_option("width", 'w', &width);
   ray::OptionalKeyValueArgument max_trunk_radius_option("max_trunk_radius", 'm', &max_trunk_radius);
+  ray::OptionalKeyValueArgument min_trunk_radius_option("min_trunk_radius", 'n', &min_trunk_radius);
   ray::OptionalKeyValueArgument dimension_option("dimension", 'd', &dimension);
   ray::OptionalKeyValueArgument tree_density_option("tree_density", 't', &tree_density);
   ray::OptionalKeyValueArgument random_factor_option("random_factor", 'r', &random_factor);
 
-  const bool tree_parsed =
-    ray::parseCommandLine(argc, argv, { &tree_text, &seed }, { &max_trunk_radius_option, &random_factor_option });
+  const bool tree_parsed = ray::parseCommandLine(
+    argc, argv, { &tree_text, &seed }, { &max_trunk_radius_option, &min_trunk_radius_option, &random_factor_option });
   const bool forest_parsed = ray::parseCommandLine(
     argc, argv, { &forest_text, &seed },
-    { &width_option, &max_trunk_radius_option, &dimension_option, &tree_density_option, &random_factor_option });
+    { &width_option, &max_trunk_radius_option, &min_trunk_radius_option, &dimension_option, &tree_density_option,
+      &random_factor_option });
   if (!tree_parsed && !forest_parsed)
   {
     usage();
@@ -60,6 +66,15 @@ int main(int argc, char *argv[])
   params.adult_tree_density = tree_density_option.isSet() ? tree_density.value() : 0.01;
   params.random_factor = random_factor_option.isSet() ? random_factor.value() : 0.25;
   params.min_branch_radius = 0.01;
+  if (min_trunk_radius_option.isSet()) {
+    params.min_tree_radius = min_trunk_radius.value();
+  }
+
+  if (params.min_tree_radius > params.max_tree_radius)
+  {
+    std::cerr << "Error: --min_trunk_radius cannot be greater than --max_trunk_radius." << std::endl;
+    usage();
+  }
 
   ray::ForestGen forest;
   ray::ForestStructure forest_struct;  // for saving
@@ -69,7 +84,12 @@ int main(int argc, char *argv[])
     ray::TreeGen &tree = forest.trees()[0];
     tree.segments().resize(1);
     tree.segments()[0].tip = Eigen::Vector3d(0, 0, 0);
-    tree.segments()[0].radius = params.max_tree_radius;
+    double radius = params.max_tree_radius;
+    if (min_trunk_radius_option.isSet())
+    {
+      radius = ray::random(min_trunk_radius.value(), params.max_tree_radius);
+    }
+    tree.segments()[0].radius = radius;
     tree.make(params);
     forest.toForestStructure(forest_struct);
     forest_struct.save("tree.txt");
