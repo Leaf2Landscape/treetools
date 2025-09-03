@@ -84,11 +84,19 @@ struct Metrics
     std::cout << "                   tree height (m): " << height.total / num_trees << ",\t" << height.min << ",\t" << height.max << std::endl;
     std::cout << "                  crown radius (m): " << crown_radius.total / num_trees << ",\t" << crown_radius.min << ",\t" << crown_radius.max << std::endl;
     std::cout << " trunk strength (diam^0.75/length): " << strength.total / num_trees << ",\t" << strength.min << ",\t" << strength.max << std::endl;
-    std::cout << "         branch dominance (0 to 1): " << dominance.total / static_cast<double>(num_branched_trees) << ",\t" << dominance.min << ",\t" << dominance.max << std::endl;
-    std::cout << "            branch angle (degrees): " << angle.total / static_cast<double>(num_branched_trees) << ",\t" << angle.min << ",\t" << angle.max << std::endl;
+    if (num_branched_trees > 0) {
+      std::cout << "       branch dominance (0 to 1): " << dominance.total / static_cast<double>(num_branched_trees) << ",\t" << dominance.min << ",\t" << dominance.max << std::endl;
+      std::cout << "          branch angle (degrees): " << angle.total / static_cast<double>(num_branched_trees) << ",\t" << angle.min << ",\t" << angle.max << std::endl;
+    } else {
+      std::cout << "       branch dominance (0 to 1): N/A (no branched trees found)" << std::endl;
+      std::cout << "          branch angle (degrees): N/A (no branched trees found)" << std::endl;
+    }
     std::cout << "                trunk bend (ratio): " << bend.total / num_trees << ",\t" << bend.min << ",\t" << bend.max << std::endl;
-    std::cout << "          dimension (w.r.t length): " << dimension.total / static_cast<double>(num_stat_trees) << ",\t" << dimension.min << ",\t" << dimension.max << std::endl;
-    std::cout << std::endl;
+    if (num_stat_trees > 0) {
+      std::cout << "        dimension (w.r.t length): " << dimension.total / static_cast<double>(num_stat_trees) << ",\t" << dimension.min << ",\t" << dimension.max << std::endl;
+    } else {
+      std::cout << "        dimension (w.r.t length): N/A (no trees met branch count requirement)" << std::endl;
+    }
     std::cout << "Per-branch mean, min, max:" << std::endl;
     std::cout << "                     diameter (cm): " << 200.0 * branch_radius.total / static_cast<double>(num_total) << ",\t" << 200.0 * branch_radius.min << ",\t" << 200.0 * branch_radius.max << std::endl;
     std::cout << std::endl;
@@ -183,6 +191,13 @@ int main(int argc, char *argv[])
   {
     usage();
   }
+   // BEGIN RECOMMENDED FIX
+  if (forest.trees.empty())
+  {
+    std::cout << "File '" << forest_file.name() << "' loaded successfully but contains no trees. Skipping." << std::endl;
+    return 0; // Exit gracefully
+  }
+  // END RECOMMENDED FIX
   if (forest.trees.size() != 0 && forest.trees[0].segments().size() == 0)
   {
     std::cout << "info only works on tree structures, not trunks-only files" << std::endl;
