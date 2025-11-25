@@ -14,6 +14,7 @@
 #include <raylib/raytreegen.h>
 #include <cstdlib>
 #include <iostream>
+#include <cstdint> // Added for uint8_t, uint16_t
 #include "treelib/imageread.h"
 
 void usage(int exit_code = 1)
@@ -122,9 +123,12 @@ int main(int argc, char *argv[])
   {
     usage();
   }
+  // --- START OF FIX ---
+  // Added missing parameters to the lambda signature and updated the writeChunk call.
   // this lambda function colours the cloud
   auto colour_rays = [&](std::vector<Eigen::Vector3d> &starts, std::vector<Eigen::Vector3d> &ends,
-                         std::vector<double> &times, std::vector<ray::RGBA> &colours) {
+                         std::vector<double> &times, std::vector<ray::RGBA> &colours,
+                         std::vector<uint8_t> &classifications, std::vector<uint16_t> &branch_ids) {
     for (auto &colour : colours)
     {
       // for each colour in the segmented cloud, it converts it to a segment ID
@@ -133,7 +137,7 @@ int main(int argc, char *argv[])
       {
         colour.red = colour.green = colour.blue = 0;
       }
-      else if (seg_id > segments.size())
+      else if (seg_id >= (int)segments.size())
       {
         std::cerr << "Error: colours found in cloud are not segment IDs, make sure to use the segmented cloud"
                   << std::endl;
@@ -150,8 +154,16 @@ int main(int argc, char *argv[])
         }
       }
     }
-    writer.writeChunk(starts, ends, times, colours);
+    ray::Cloud chunk;
+    chunk.starts = starts;
+    chunk.ends = ends;
+    chunk.times = times;
+    chunk.colours = colours;
+    chunk.classifications = classifications;
+    chunk.branch_ids = branch_ids;
+    writer.writeChunk(chunk);
   };
+  // --- END OF FIX ---
   if (!ray::Cloud::read(cloud_file.name(), colour_rays))
   {
     usage();

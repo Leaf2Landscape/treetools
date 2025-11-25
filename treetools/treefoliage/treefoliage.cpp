@@ -11,6 +11,7 @@
 #include <raylib/raytreegen.h>
 #include <cstdlib>
 #include <iostream>
+#include <cstdint> // Added for uint8_t, uint16_t
 #include "raylib/raytreegen.h"
 #include "treelib/treeutils.h"
 
@@ -154,8 +155,11 @@ int main(int argc, char *argv[])
   {
     usage();
   }
+  // --- START OF FIX ---
+  // Added missing parameters to the lambda signature and updated the writeChunk call.
   auto colour = [&](std::vector<Eigen::Vector3d> &starts, std::vector<Eigen::Vector3d> &ends,
-                    std::vector<double> &times, std::vector<ray::RGBA> &colours) {
+                    std::vector<double> &times, std::vector<ray::RGBA> &colours,
+                    std::vector<uint8_t> &classifications, std::vector<uint16_t> &branch_ids) {
     for (size_t i = 0; i < ends.size(); i++)
     {
       if (colours[i].alpha == 0)
@@ -167,8 +171,16 @@ int main(int argc, char *argv[])
       const uint8_t shade = (uint8_t)std::max(0.0, std::min(3.0 * 255.0 * density / max_density, 255.0));
       colours[i].red = colours[i].green = colours[i].blue = shade;
     }
-    writer.writeChunk(starts, ends, times, colours);
+    ray::Cloud chunk;
+    chunk.starts = starts;
+    chunk.ends = ends;
+    chunk.times = times;
+    chunk.colours = colours;
+    chunk.classifications = classifications;
+    chunk.branch_ids = branch_ids;
+    writer.writeChunk(chunk);
   };
+  // --- END OF FIX ---
 
   if (!ray::Cloud::read(cloud_file.name(), colour))
   {
